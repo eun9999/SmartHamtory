@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">SmartHamtory</string>
+    <string name="hint_id">아이디를 입력하세요</string>
+    <string name="hint_password">패스워드를 입력하세요</string>
+    <string name="btn_login">로그인</string>
+</resources>
