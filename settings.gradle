@@ -1,2 +1,2 @@
-rootProject.name = "SmartHamtory"
+rootProject.name = "bletest"
 include ':app'
