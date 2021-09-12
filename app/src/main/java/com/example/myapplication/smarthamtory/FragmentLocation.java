@@ -31,43 +31,13 @@ public class FragmentLocation extends Fragment {
     private ConstraintLayout constlayout;
     private ConstraintSet applyConstraintSet = new ConstraintSet();
     TextView location_user;
+    private String RSSI;
 
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_loaction, container, false);
 
         TextView distance = (TextView)view.findViewById(R.id.textView3);
 
-        beaconManager = BeaconManager.getInstanceForApplication(getActivity().getApplicationContext());
-        // To detect proprietary beacons, you must add a line like below corresponding to your beacon
-        // type.  Do a web search for "setBeaconLayout" to get the proper expression.
-        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
-//        beaconManager.addMonitorNotifier(new MonitorNotifier() {
-//            @Override
-//            public void didEnterRegion(Region region) {
-//                Log.i(TAG, "I just saw an beacon for the first time!");
-//            }
-//
-//            @Override
-//            public void didExitRegion(Region region) {
-//                Log.i(TAG, "I no longer see an beacon");
-//            }
-//
-//            @Override
-//            public void didDetermineStateForRegion(int state, Region region) {
-//                Log.i(TAG, "I have just switched from seeing/not seeing beacons: "+state);
-//            }
-//        });
-
-        beaconManager.addRangeNotifier((beacons, region) -> {
-            if (beacons.size() > 0) {
-                Log.i(TAG, "The first beacon I see is about "+beacons.iterator().next().getDistance()+" meters away.");
-                double d = beacons.iterator().next().getDistance();
-                String s = Double.toString(d);
-                distance.setText(s);
-            }
-        });
-        beaconManager.startRangingBeacons(new Region("myRangingUniqueId", null, null, null));
-        //beaconManager.startMonitoring(new Region("myMonitoringUniqueId", null, null, null));
 
 
         // ##### 유저 위치 변경시키기

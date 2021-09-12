@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="equipment">
+        <item>프레스</item>
+        <item>차체조립</item>
+        <item>의장</item>
+        <item>도장</item>
+    </string-array>
+</resources>

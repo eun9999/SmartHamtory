@@ -6,12 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     android:orientation="vertical"
-    android:weightSum="7">
+    android:weightSum="9">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5">
+        android:layout_weight="6">
         <ListView
             android:id="@+id/listviews"
             android:layout_width="match_parent"
@@ -21,12 +21,27 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="2">
+        android:layout_weight="1">
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:background="@drawable/spinner_background"
+            >
+        </Spinner>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3">
 
         <EditText
             android:id="@+id/error_content1"
-            android:layout_width="300dp"
-            android:layout_height="wrap_content"
+            android:layout_width="250dp"
+            android:layout_height="50dp"
             android:layout_margin="10dp"
             android:background="@drawable/input_register_bg"
             android:hint="에러 내용"
@@ -39,7 +54,7 @@
         <Button
             android:id="@+id/sendError"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
             android:layout_marginTop="10dp"
             android:text="에러 전송"
             android:background="@drawable/login_btn"

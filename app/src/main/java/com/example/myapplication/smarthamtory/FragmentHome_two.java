@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -16,11 +17,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +34,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +46,7 @@ public class FragmentHome_two extends Fragment {
     Button sendErrorBtn;
     String _url;
     String user_id, user_pwd, error_content, equipment_name;
+    String tempRSSI;
     private Context context;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner leScanner;
@@ -54,9 +59,13 @@ public class FragmentHome_two extends Fragment {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bleCheck(bluetoothAdapter);
         leScanner = bluetoothAdapter.getBluetoothLeScanner();
+        ScanSettings settings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setReportDelay(0)
+                .build();
 
         //ble 주변 장치 스캔 시작
-        leScanner.startScan(scanCallback);
+        leScanner.startScan(null,settings,scanCallback);
     }
 
     @Override
@@ -77,6 +86,13 @@ public class FragmentHome_two extends Fragment {
 
         data1 = view.findViewById(R.id.machine_data1_2);    // 설비 1의 센서값
 
+        //spinner 사용하기
+        final Spinner mSpinner = view.findViewById(R.id.spinner);
+        String[] equipment = getResources().getStringArray(R.array.equipment);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_spinner_item, equipment);
+        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        mSpinner.setAdapter(adapter);
+
         // 로그인 아이디, 비밀번호 받아오기
         Bundle bundle = this.getArguments();
         if (bundle != null) {
@@ -87,9 +103,9 @@ public class FragmentHome_two extends Fragment {
             Log.d("user", user_pwd);
         }
 
-        // 에러 전송 버튼 클릭
-//        sendErrorBtn.setOnClickListener(new View.OnClickListener(){
-//            public void onClick(View v){
+        //에러 전송 버튼 클릭
+        sendErrorBtn.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
 //                _url = "mqhome.ipdisk.co.kr/apps/errorreceive/";
 //
 //                if (cb1.isChecked()){
@@ -116,10 +132,12 @@ public class FragmentHome_two extends Fragment {
 //                    putData(user_id, user_pwd, equipment_name, error_content);
 //                    cb4.setChecked(false);
 //                }
-//
-//
-//            }
-//        });
+
+                //선택된 값 가져오기
+                Log.d("spinner", mSpinner.getSelectedItem().toString());
+
+            }
+        });
 
         return view;
     }
@@ -186,6 +204,11 @@ public class FragmentHome_two extends Fragment {
                 if(result != null)
                     items.add(new ListViewItem(result));    //중복 나열 방지
                 customBaseAdapter.notifyDataSetChanged();
+            }
+            tempRSSI = "";
+            for (int i = 0; i < items.size(); i++){
+                tempRSSI += items.get(i).getRSSI();
+                Log.d("tempRSSI", tempRSSI);
             }
         }
         @Override
@@ -260,10 +283,12 @@ class CustomBaseAdapter extends BaseAdapter {
             mugae.setText("거리 : ");
             String str = listViewItem.getScanRecorder().substring(8,14);
 
+            str = str.replace(" ","");
             int idx = str.indexOf(",");
             String tempdata1 = str.substring(0,idx);
             String tempdata2 = str.substring(idx+1);
             tempdata2 = tempdata2.replace(",", "");
+
             if (tempdata1.length()<2 || tempdata2.length()<2) {
                 if(tempdata1.length()<2)
                     tempdata1 = "0" + tempdata1; //3이면 03이렇게 표현하기위해
@@ -283,9 +308,12 @@ class CustomBaseAdapter extends BaseAdapter {
         else if (listViewItem.getName().equals("의장")){
             name.setText("의장");
             mugae.setText("압력 : ");
-            String str = listViewItem.getScanRecorder().substring(8,10);
+            String str = listViewItem.getScanRecorder().substring(8,12);
+            Log.d("의장", str);
+            int idx = str.indexOf(",");
+            str = str.substring(0,idx);
             record.setText(str);
-            unit.setText(" ");
+            unit.setText("N");
         }
         else if (listViewItem.getName().equals("도장")){
             name.setText("도장");

@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,9 +48,8 @@ public class MainActivity extends AppCompatActivity {
     String user_id, user_pwd;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner leScanner;
-    private CustomBaseAdapter customBaseAdapter;
-    public ArrayList<ListViewItem> items;
     public static Context context_main;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,5 +99,6 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
     }
+
 }
 

@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+
     <TextView
         android:id="@+id/location_1"
         android:layout_width="wrap_content"
@@ -79,19 +80,11 @@
         app:layout_constraintLeft_toRightOf="@id/location_1"
         app:layout_constraintTop_toTopOf="@id/location_1" />
 
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="거리값 출력"
-        android:textSize="30dp"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:textColor="#000000"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/location_4"
-        android:layout_marginTop="30dp"
-        android:layout_marginLeft="20dp"/>
+    <ListView
+        android:id="@+id/listviews_two"
+        android:layout_width="match_parent"
+        android:layout_height="130dp"
+        app:layout_constraintTop_toBottomOf="@id/location_4" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
