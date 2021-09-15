@@ -16,10 +16,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -93,12 +95,19 @@ public class MainActivity extends AppCompatActivity {
                     fragment.setArguments(bundle);
                     break;
                 case R.id.location:
-                    transaction.replace(R.id.frameLayout, fragmentLocation).commitAllowingStateLoss();
+                    //putData("1","2","3","4");
+                    Bundle bundle2 = new Bundle();
+                    bundle2.putString("user_id", user_id);
+                    bundle2.putString("user_pwd", user_pwd);
+                    FragmentLocation fragment2 = new FragmentLocation();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, fragment2).commit();
+                    fragment2.setArguments(bundle2);
                     break;
             }
             return true;
         }
     }
 
-}
 
+
+}

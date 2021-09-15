@@ -11,8 +11,8 @@
         android:id="@+id/location_1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="설비1"
-        android:textSize="30dp"
+        android:text="차체조립"
+        android:textSize="20dp"
         android:textAlignment="center"
         android:gravity="center"
         android:textColor="#000000"
@@ -26,46 +26,46 @@
         android:id="@+id/location_2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="설비2"
-        android:textSize="30dp"
+        android:text="도장"
+        android:textSize="20dp"
+        android:textAlignment="center"
+        android:gravity="center"
+        android:textColor="#000000"
+        android:background="@drawable/location_box"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="20dp"/>
+
+    <TextView
+        android:id="@+id/location_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="프레스"
+        android:textSize="20dp"
         android:textAlignment="center"
         android:gravity="center"
         android:textColor="#000000"
         android:background="@drawable/location_box"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/location_1"
-        android:layout_marginTop="30dp"
-        android:layout_marginLeft="20dp"/>
-
-    <TextView
-        android:id="@+id/location_3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="설비3"
-        android:textSize="30dp"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:textColor="#000000"
-        android:background="@drawable/location_box"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/location_2"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="200dp"
         android:layout_marginLeft="20dp"/>
 
     <TextView
         android:id="@+id/location_4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="설비4"
-        android:textSize="30dp"
+        android:text="의장"
+        android:textSize="20dp"
         android:textAlignment="center"
         android:gravity="center"
         android:textColor="#000000"
         android:background="@drawable/location_box"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/location_3"
-        android:layout_marginTop="30dp"
-        android:layout_marginLeft="20dp"/>
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/location_2"
+        android:layout_marginTop="200dp"
+        android:layout_marginRight="20dp"/>
 
     <TextView
         android:id="@+id/location_user"
@@ -80,11 +80,15 @@
         app:layout_constraintLeft_toRightOf="@id/location_1"
         app:layout_constraintTop_toTopOf="@id/location_1" />
 
-    <ListView
-        android:id="@+id/listviews_two"
-        android:layout_width="match_parent"
-        android:layout_height="130dp"
-        app:layout_constraintTop_toBottomOf="@id/location_4" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/location"
+        android:text=""
+        android:textSize="30dp"
+        android:textColor="#000000"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/location_3"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

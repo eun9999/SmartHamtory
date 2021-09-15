@@ -37,43 +37,35 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FragmentHome_two extends Fragment {
-    TextView data1, data2, data3, data4;
-    EditText error_content1, error_content2, error_content3, error_content4;
-    CheckBox cb1, cb2, cb3, cb4;
+    TextView data1;
+    EditText error_content1;
     Button sendErrorBtn;
     String _url;
     String user_id, user_pwd, error_content, equipment_name;
     String tempRSSI;
+
     private Context context;
-    private BluetoothAdapter bluetoothAdapter;
-    private BluetoothLeScanner leScanner;
     private ArrayList<ListViewItem> items;
     private CustomBaseAdapter customBaseAdapter;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //ble 검색을위한것
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        bleCheck(bluetoothAdapter);
-        leScanner = bluetoothAdapter.getBluetoothLeScanner();
-        ScanSettings settings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                .setReportDelay(0)
-                .build();
-
         //ble 주변 장치 스캔 시작
-        leScanner.startScan(null,settings,scanCallback);
+        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
+        ble_scanner.startScan();
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home_two, container, false);
-        //ArrayList<ListViewItem> items = ((MainActivity)MainActivity.context_main).items;
-        //cb1 = view.findViewById(R.id.checkBox1);    // 설비 1의 체크박스
         context = container.getContext();
+
         //list 보여줌
         items = new ArrayList<>();
         customBaseAdapter = new CustomBaseAdapter(getActivity().getApplicationContext(),items);
@@ -106,41 +98,49 @@ public class FragmentHome_two extends Fragment {
         //에러 전송 버튼 클릭
         sendErrorBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-//                _url = "mqhome.ipdisk.co.kr/apps/errorreceive/";
-//
-//                if (cb1.isChecked()){
-//                    equipment_name = "프레스";
-//                    error_content = error_content1.getText().toString();    // 설비 1의 에러 내용
-//                    putData(user_id, user_pwd, equipment_name, error_content);
-//                    cb1.setChecked(false);
-//                }
-//                if (cb2.isChecked()){
-//                    equipment_name = "차체조립";
-//                    error_content = error_content2.getText().toString();    // 설비 2의 에러 내용
-//                    putData(user_id, user_pwd, equipment_name, error_content);
-//                    cb2.setChecked(false);
-//                }
-//                if (cb3.isChecked()){
-//                    equipment_name = "도장";
-//                    error_content = error_content3.getText().toString();    // 설비 3의 에러 내용
-//                    putData(user_id, user_pwd, equipment_name, error_content);
-//                    cb3.setChecked(false);
-//                }
-//                if (cb4.isChecked()){
-//                    equipment_name = "의장";
-//                    error_content = error_content4.getText().toString();    // 설비 4의 에러 내용
-//                    putData(user_id, user_pwd, equipment_name, error_content);
-//                    cb4.setChecked(false);
-//                }
-
-                //선택된 값 가져오기
+               //선택된 값 가져오기
                 Log.d("spinner", mSpinner.getSelectedItem().toString());
 
+                _url = "mqhome.ipdisk.co.kr/apps/errorreceive/";
+
+                equipment_name = mSpinner.getSelectedItem().toString();
+                error_content = error_content1.getText().toString();    // 설비 1의 에러 내용
+                putData(user_id, user_pwd, equipment_name, error_content);
+                error_content1.setText("");
             }
         });
 
         return view;
     }
+
+    private final ScanCallback scanCallback = new ScanCallback() {
+        // 장치 하나 발견할때마다 호출됨
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            //등록된 공장의 설비만 검색
+            for(ListViewItem listViewItem:items){
+                if(result.getDevice().equals(listViewItem.getScanResult().getDevice())) {
+                    items.set(items.indexOf(listViewItem),new ListViewItem(result)); //이미 찾았던 설비면 거기다 값 업데이트
+                    result = null;
+                    break;
+                }
+            }
+            if(result != null){
+                items.add(new ListViewItem(result));    //중복 나열 방지
+            }
+            customBaseAdapter.notifyDataSetChanged();
+        }
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+    };
 
     public class NetworkTest extends AsyncTask<Void,Void,String> {
         String url;
@@ -185,61 +185,6 @@ public class FragmentHome_two extends Fragment {
         networkTest.execute();
 
     }
-    private final ScanCallback scanCallback = new ScanCallback() {
-        // 장치 하나 발견할때마다 호출됨
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
-            if(result.getDevice().toString().equals("B8:27:EB:C0:11:A5") ||
-                    result.getDevice().toString().equals("B8:27:EB:A5:63:57") ||
-                    result.getDevice().toString().equals("B8:27:EB:41:45:A5") ||
-                    result.getDevice().toString().equals("B8:27:EB:BE:1E:08") ){
-                for(ListViewItem listViewItem:items){
-                    if(result.getDevice().equals(listViewItem.getScanResult().getDevice())) {
-                        items.set(items.indexOf(listViewItem),new ListViewItem(result));
-                        result = null;
-                        break;
-                    }
-                }
-                if(result != null)
-                    items.add(new ListViewItem(result));    //중복 나열 방지
-                customBaseAdapter.notifyDataSetChanged();
-            }
-            tempRSSI = "";
-            for (int i = 0; i < items.size(); i++){
-                tempRSSI += items.get(i).getRSSI();
-                Log.d("tempRSSI", tempRSSI);
-            }
-        }
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-        }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-        }
-    };
-
-    private void bleCheck(BluetoothAdapter bluetoothAdapter) {
-        if (bluetoothAdapter == null) {
-            //블루투스를 지원하지 않으면 장치를 끈다
-            //Toast.makeText(this, "블루투스를 지원하지 않는 장치입니다.", Toast.LENGTH_SHORT).show();
-            Toast.makeText(context, "블루투스를 지원하지 않는 장치입니다.", Toast.LENGTH_SHORT).show();
-            //아래 3줄 finish() 대신하는거
-            FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
-            fragmentManager.beginTransaction().remove(this).commit();
-            fragmentManager.popBackStack();
-        } else {
-            //연결 안되었을 때
-            if (!bluetoothAdapter.isEnabled()) {
-                //블루투스 연결
-                Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivity(i);
-            }
-        }
-    }
 }
 
 // list 에 ble 장치 정보 저장
@@ -281,13 +226,11 @@ class CustomBaseAdapter extends BaseAdapter {
         if (listViewItem.getName().equals("프레스")){
             name.setText("프레스");
             mugae.setText("거리 : ");
-            String str = listViewItem.getScanRecorder().substring(8,14);
-
-            str = str.replace(" ","");
-            int idx = str.indexOf(",");
-            String tempdata1 = str.substring(0,idx);
-            String tempdata2 = str.substring(idx+1);
-            tempdata2 = tempdata2.replace(",", "");
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            String tempdata1 = str2[2];
+            String tempdata2 = str2[3];
 
             if (tempdata1.length()<2 || tempdata2.length()<2) {
                 if(tempdata1.length()<2)
@@ -301,28 +244,30 @@ class CustomBaseAdapter extends BaseAdapter {
         else if (listViewItem.getName().equals("차체조립")){
             name.setText("차체조립");
             mugae.setText("실링 온도 : ");
-            String str = listViewItem.getScanRecorder().substring(8,10);
-            record.setText(str);
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
             unit.setText("℃");
         }
         else if (listViewItem.getName().equals("의장")){
             name.setText("의장");
             mugae.setText("압력 : ");
-            String str = listViewItem.getScanRecorder().substring(8,12);
-            Log.d("의장", str);
-            int idx = str.indexOf(",");
-            str = str.substring(0,idx);
-            record.setText(str);
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
             unit.setText("N");
         }
         else if (listViewItem.getName().equals("도장")){
             name.setText("도장");
             mugae.setText("무게 : ");
-            String str = listViewItem.getScanRecorder().substring(8,10);
-            record.setText(str);
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
             unit.setText("kg");
         }
-
         return view;
     }
 }
