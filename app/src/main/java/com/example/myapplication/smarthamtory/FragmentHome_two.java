@@ -10,6 +10,8 @@ import android.bluetooth.le.ScanSettings;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -46,18 +48,31 @@ public class FragmentHome_two extends Fragment {
     Button sendErrorBtn;
     String _url;
     String user_id, user_pwd, error_content, equipment_name;
-    String tempRSSI;
-
+    DBHelper helper;
+    SQLiteDatabase db;
+    String[] equipment_list;
     private Context context;
     private ArrayList<ListViewItem> items;
     private CustomBaseAdapter customBaseAdapter;
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        helper = new DBHelper(context, "equipDB.db", null, 1);
+        db = helper.getWritableDatabase();
+        helper.onCreate(db);
+
+        String sql = "SELECT * FROM equipment;";
+        Cursor c = db.rawQuery(sql, null);
+        int i = 0;
+        while(c.moveToNext()){
+            equipment_list[i] = c.getString(c.getColumnIndex("address"));
+            i++;
+        }
+
         //ble 주변 장치 스캔 시작
-        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
+        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, equipment_list);
         ble_scanner.startScan();
     }
 
@@ -183,7 +198,6 @@ public class FragmentHome_two extends Fragment {
 
         NetworkTest networkTest = new NetworkTest("http://" + _url, contentValues,"POST");
         networkTest.execute();
-
     }
 }
 

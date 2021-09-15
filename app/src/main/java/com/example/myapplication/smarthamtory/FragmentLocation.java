@@ -55,7 +55,6 @@ public class FragmentLocation extends Fragment {
         View view = inflater.inflate(R.layout.fragment_loaction, container, false);
         context = container.getContext();
         items = new ArrayList<>();
-        TextView distance = (TextView)view.findViewById(R.id.textView3);
 
 
         // 로그인 아이디, 비밀번호 받아오기
@@ -74,10 +73,11 @@ public class FragmentLocation extends Fragment {
 
         ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
 
-        newLayoutParams.topMargin = 100;
-        newLayoutParams.leftMargin = 200;
-        newLayoutParams.rightMargin = 50;
+        newLayoutParams.leftMargin = 100;
+        newLayoutParams.topMargin = 200;
+
         location_user.setLayoutParams(newLayoutParams);
+
         // ##### 유저 위치 변경시키기
 
         return view;
@@ -181,11 +181,26 @@ public class FragmentLocation extends Fragment {
             );
             String[] position;
             position = result.split(", ");
-            String positionX, positionY;
-            positionX = position[0];
-            positionY = position[1];
-            Log.d("X좌표",positionX);
-            Log.d("Y좌표",positionY);
+            double positionX, positionY;
+            positionX = Double.parseDouble(position[0]);
+            positionY = Double.parseDouble(position[1]);
+
+            int newX, newY;
+            newX = (int) (positionX * 100);
+            newY = (int) ((2 - positionY) * 100);
+
+            if(newX > 230) newX = 230;
+            else if(newX < 100) newX = 100;
+
+            if(newY > 230) newY = 230;
+            else if (newY < 70) newY = 70;
+
+            ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
+
+            newLayoutParams.leftMargin = newX;
+            newLayoutParams.topMargin = newY;
+            location_user.setLayoutParams(newLayoutParams);
+
         }
     }
 

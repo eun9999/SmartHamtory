@@ -1,7 +1,10 @@
 package com.example.myapplication.smarthamtory;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -20,7 +23,9 @@ import org.json.JSONObject;
 public class ScanQR extends AppCompatActivity {
     private IntentIntegrator intentIntegrator;
     private TextView textViewName, textViewAddress, textViewResult;
-
+    String user_id, user_pwd;
+    DBHelper helper;
+    SQLiteDatabase db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +36,6 @@ public class ScanQR extends AppCompatActivity {
 
         textViewName = (TextView) findViewById(R.id.textViewName);
         textViewAddress = (TextView) findViewById(R.id.textViewAddress);
-        textViewResult = (TextView)  findViewById(R.id.textViewResult);
 
         IntentIntegrator intentIntegrator = new IntentIntegrator(this);
         intentIntegrator.setCaptureActivity(Orientation.class);
@@ -41,10 +45,21 @@ public class ScanQR extends AppCompatActivity {
         intentIntegrator.initiateScan();
         //new IntentIntegrator(this).initiateScan();
 
+        Intent intent = getIntent();
+        user_id = intent.getExtras().getString("user_id");
+        user_pwd = intent.getExtras().getString("user_pwd");
+
+        helper = new DBHelper(ScanQR.this, "equipDB.db", null, 1);
+        db = helper.getWritableDatabase();
+        helper.onCreate(db);
+
+
         mainButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                intent.putExtra("user_id", user_id);
+                intent.putExtra("user_pwd", user_pwd);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }
@@ -54,6 +69,8 @@ public class ScanQR extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), ScanQR.class);
+                intent.putExtra("user_id", user_id);
+                intent.putExtra("user_pwd", user_pwd);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             }
@@ -94,7 +111,20 @@ public class ScanQR extends AppCompatActivity {
                     // "" 속에는 QR코드의 키 값
                     textViewName.setText(obj.getString("name"));
                     textViewAddress.setText(obj.getString("address"));
-                    textViewResult.setText(obj.getString("information"));
+
+                    //insert
+                    ContentValues values = new ContentValues();
+                    values.put("name", obj.getString("name"));
+                    values.put("address", obj.getString("address"));
+                    db.insertWithOnConflict("equipment", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+
+                    String sql = "SELECT * FROM equipment;";
+                    Cursor c = db.rawQuery(sql, null);
+
+                    while(c.moveToNext()){
+                        System.out.println("name : "+c.getString(c.getColumnIndex("name")));
+                        System.out.println("address : "+c.getString(c.getColumnIndex("address")));
+                    }
 
 
                 } catch (JSONException e) {
@@ -110,3 +140,4 @@ public class ScanQR extends AppCompatActivity {
         }
     }
 }
+

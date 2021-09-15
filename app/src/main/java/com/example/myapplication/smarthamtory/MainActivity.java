@@ -50,14 +50,14 @@ public class MainActivity extends AppCompatActivity {
     String user_id, user_pwd;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothLeScanner leScanner;
-    public static Context context_main;
+    //public static Context context_main;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context_main = this;
+        //context_main = this;
         Intent intent = getIntent();
         user_id = intent.getExtras().getString("user_id");
         user_pwd = intent.getExtras().getString("user_pwd");
