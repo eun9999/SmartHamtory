@@ -50,6 +50,7 @@ public class FragmentHome_two extends Fragment {
     String user_id, user_pwd, error_content, equipment_name;
     DBHelper helper;
     SQLiteDatabase db;
+    List<String> list_temp = new ArrayList<String>();
     String[] equipment_list;
     private Context context;
     private ArrayList<ListViewItem> items;
@@ -58,22 +59,30 @@ public class FragmentHome_two extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        context = getContext();
         helper = new DBHelper(context, "equipDB.db", null, 1);
         db = helper.getWritableDatabase();
+
         helper.onCreate(db);
 
         String sql = "SELECT * FROM equipment;";
         Cursor c = db.rawQuery(sql, null);
-        int i = 0;
+
         while(c.moveToNext()){
-            equipment_list[i] = c.getString(c.getColumnIndex("address"));
-            i++;
+            System.out.println("name : "+c.getString(c.getColumnIndex("name")));
+            System.out.println("address : "+c.getString(c.getColumnIndex("address")));
+            list_temp.add(c.getString(c.getColumnIndex("address")));
         }
 
+        equipment_list = new String[list_temp.size()];
+        list_temp.toArray(equipment_list);
+        Log.d("equipment", equipment_list[0]);
+        Log.d("equipment", equipment_list[1]);
+        Log.d("equipment", equipment_list[2]);
         //ble 주변 장치 스캔 시작
         BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, equipment_list);
         ble_scanner.startScan();
+
     }
 
     @Override
@@ -277,6 +286,7 @@ class CustomBaseAdapter extends BaseAdapter {
             name.setText("도장");
             mugae.setText("무게 : ");
             String str = listViewItem.getScanRecorder();
+
             String[] str2 = str.split(", ");
             Log.d("str2", str2[2]);
             record.setText(str2[2]);

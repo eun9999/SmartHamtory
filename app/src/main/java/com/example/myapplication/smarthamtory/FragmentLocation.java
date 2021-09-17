@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FragmentLocation extends Fragment {
@@ -41,9 +42,11 @@ public class FragmentLocation extends Fragment {
     private ArrayList<ListViewItem> items;
 
     TextView location_user, location;
-    String tempRSSI[];
+    double tempRSSI[];
+    int newX, newY;
     String user_id, user_pwd;
     private int cnt = 0; //좌표 너무 빨리 바껴서 텀 주기
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,15 +71,16 @@ public class FragmentLocation extends Fragment {
         }
 
         // ##### 유저 위치 변경시키기
+
         location_user = view.findViewById(R.id.location_user);
         location = view.findViewById(R.id.location);
 
-        ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
+        //ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
 
-        newLayoutParams.leftMargin = 100;
-        newLayoutParams.topMargin = 200;
+        //newLayoutParams.leftMargin = 70;
+        //newLayoutParams.topMargin = 150;
 
-        location_user.setLayoutParams(newLayoutParams);
+        //location_user.setLayoutParams(newLayoutParams);
 
         // ##### 유저 위치 변경시키기
 
@@ -108,9 +112,9 @@ public class FragmentLocation extends Fragment {
             if(result != null){
                 items.add(new ListViewItem(result));    //중복 나열 방지
             }
-            tempRSSI = new String[]{"", "", "", ""};
+            tempRSSI = new double[]{0,0,0,0};
             for (int i = 0; i < items.size(); i++){
-                String rssi = items.get(i).getDistance();
+                double rssi = items.get(i).getRssiNew2();
                 switch(items.get(i).getName()) {
                     case "프레스":
                         tempRSSI[0] = rssi;
@@ -128,7 +132,39 @@ public class FragmentLocation extends Fragment {
             }
             Log.d("caserssi", tempRSSI[0]+" "+tempRSSI[1]+" "+tempRSSI[2]+" "+tempRSSI[3]);
             if(cnt == 50){
-                putData(tempRSSI[0], tempRSSI[1], tempRSSI[2], tempRSSI[3]);
+                //putData(tempRSSI[0], tempRSSI[1], tempRSSI[2], tempRSSI[3]);
+                ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
+
+                Arrays.sort(tempRSSI);
+                double min = tempRSSI[3];
+
+
+                if(min == tempRSSI[0]) {
+                    newX = 230;
+                    newY = 0;
+                }
+                else if(min == tempRSSI[1]) {
+                    newX = 0;
+                    newY = 70;
+                }
+                else if(min == tempRSSI[2]) {
+                    newX = 130;
+                    newY = 230;
+                }
+                else if(min == tempRSSI[3]) {
+                    newX = 130;
+                    newY = 70;
+                }
+                else{
+                    newX = 70;
+                    newY = 150;
+                }
+
+                DisplayMetrics dm = getResources().getDisplayMetrics();
+                newLayoutParams.leftMargin = (int) (newX * dm.density);
+                newLayoutParams.topMargin = (int) (newY * dm.density);
+                location_user.setLayoutParams(newLayoutParams);
+
                 cnt = 0;
             }
             cnt++;
@@ -143,7 +179,7 @@ public class FragmentLocation extends Fragment {
             super.onBatchScanResults(results);
         }
     };
-
+/*
     public class NetworkTest extends AsyncTask<Void,Void,String> {
         String url;
         String result;
@@ -187,13 +223,14 @@ public class FragmentLocation extends Fragment {
 
             int newX, newY;
             newX = (int) (positionX * 100);
-            newY = (int) ((2 - positionY) * 100);
+            newY = (int) ((2 - positionY) * 100 / 2 * 3);
 
             if(newX > 230) newX = 230;
             else if(newX < 100) newX = 100;
 
             if(newY > 230) newY = 230;
             else if (newY < 70) newY = 70;
+            else if (newY < 0) newY = 230;
 
             ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
 
@@ -218,4 +255,5 @@ public class FragmentLocation extends Fragment {
         NetworkTest networkTest = new NetworkTest("http://mqhome.ipdisk.co.kr/apps/trilateration_rssi/", contentValues,"POST");
         networkTest.execute();
     }
+    */
 }

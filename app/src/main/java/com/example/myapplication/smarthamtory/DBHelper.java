@@ -1,8 +1,10 @@
 package com.example.myapplication.smarthamtory;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DBHelper extends SQLiteOpenHelper {
     public DBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
@@ -21,10 +23,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        String sql = "DROP TABLE if exists mytable";
+        String sql = "DROP TABLE if exists equipment";
 
         db.execSQL(sql);
         onCreate(db);
     }
 
+//    public String getAddr(){
+//
+//        return
+//    }
 }
