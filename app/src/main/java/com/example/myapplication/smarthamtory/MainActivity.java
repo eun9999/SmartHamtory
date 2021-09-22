@@ -95,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
                     fragment.setArguments(bundle);
                     break;
                 case R.id.location:
-                    //putData("1","2","3","4");
                     Bundle bundle2 = new Bundle();
                     bundle2.putString("user_id", user_id);
                     bundle2.putString("user_pwd", user_pwd);

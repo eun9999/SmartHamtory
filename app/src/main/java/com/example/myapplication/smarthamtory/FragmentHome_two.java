@@ -65,20 +65,19 @@ public class FragmentHome_two extends Fragment {
 
         helper.onCreate(db);
 
+        //QR코드 입력으로 내부 DB에 등록된 설비만 볼 수 있도록 필터링
         String sql = "SELECT * FROM equipment;";
         Cursor c = db.rawQuery(sql, null);
 
         while(c.moveToNext()){
-            System.out.println("name : "+c.getString(c.getColumnIndex("name")));
-            System.out.println("address : "+c.getString(c.getColumnIndex("address")));
+//            System.out.println("name : "+c.getString(c.getColumnIndex("name")));
+//            System.out.println("address : "+c.getString(c.getColumnIndex("address")));
             list_temp.add(c.getString(c.getColumnIndex("address")));
         }
 
         equipment_list = new String[list_temp.size()];
         list_temp.toArray(equipment_list);
-        Log.d("equipment", equipment_list[0]);
-        Log.d("equipment", equipment_list[1]);
-        Log.d("equipment", equipment_list[2]);
+        
         //ble 주변 장치 스캔 시작
         BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, equipment_list);
         ble_scanner.startScan();

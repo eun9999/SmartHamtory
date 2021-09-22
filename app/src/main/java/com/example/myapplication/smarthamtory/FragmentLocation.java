@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -27,6 +29,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
@@ -42,6 +45,7 @@ public class FragmentLocation extends Fragment {
     private ArrayList<ListViewItem> items;
 
     TextView location_user, location;
+    ImageView imageView;
     double tempRSSI[];
     int newX, newY;
     String user_id, user_pwd;
@@ -50,6 +54,7 @@ public class FragmentLocation extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         //ble 주변 장치 스캔 시작
         BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
         ble_scanner.startScan();
@@ -58,7 +63,11 @@ public class FragmentLocation extends Fragment {
         View view = inflater.inflate(R.layout.fragment_loaction, container, false);
         context = container.getContext();
         items = new ArrayList<>();
-
+        
+        //내 위치 나타내는 이미지 색 변경
+        imageView = (ImageView)view.findViewById(R.id.location_user);
+        int color = ContextCompat.getColor(getActivity(), R.color.red);
+        imageView.setColorFilter(color);
 
         // 로그인 아이디, 비밀번호 받아오기
         Bundle bundle = this.getArguments();
@@ -70,19 +79,6 @@ public class FragmentLocation extends Fragment {
             Log.d("user", user_pwd);
         }
 
-        // ##### 유저 위치 변경시키기
-
-        location_user = view.findViewById(R.id.location_user);
-        location = view.findViewById(R.id.location);
-
-        //ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
-
-        //newLayoutParams.leftMargin = 70;
-        //newLayoutParams.topMargin = 150;
-
-        //location_user.setLayoutParams(newLayoutParams);
-
-        // ##### 유저 위치 변경시키기
 
         return view;
     }
@@ -132,36 +128,43 @@ public class FragmentLocation extends Fragment {
             }
             Log.d("caserssi", tempRSSI[0]+" "+tempRSSI[1]+" "+tempRSSI[2]+" "+tempRSSI[3]);
             if(cnt == 50){
-                //putData(tempRSSI[0], tempRSSI[1], tempRSSI[2], tempRSSI[3]);
                 ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
 
-                Arrays.sort(tempRSSI);
-                double min = tempRSSI[3];
-
-
-                if(min == tempRSSI[0]) {
-                    newX = 230;
-                    newY = 0;
+                double max = tempRSSI[0];
+                for(int i = 0; i < tempRSSI.length; i++){
+                    if(max < tempRSSI[i])
+                        max = tempRSSI[i];
                 }
-                else if(min == tempRSSI[1]) {
-                    newX = 0;
-                    newY = 70;
+                //일단 6+1개 구역으로 나눔 안 6, 밖 1
+                //밖 : Top : 400, X : 180
+                //가운데 : Top : 75, X : 180
+                //차체에 가까울 때 : Top : 10, X : 110
+                //도장에 가까울 때 : Top : 10, X : 250
+                //의장에 가까울 때 : Top : 140, X : 250
+                //프레스에 가까울 때 : Top : 140, X : 110
+                if(max == tempRSSI[0]) {
+                    newX = 110;
+                    newY = 140;
                 }
-                else if(min == tempRSSI[2]) {
-                    newX = 130;
-                    newY = 230;
+                else if(max == tempRSSI[1]) {
+                    newX = 110;
+                    newY = 10;
                 }
-                else if(min == tempRSSI[3]) {
-                    newX = 130;
-                    newY = 70;
+                else if(max == tempRSSI[2]) {
+                    newX = 250;
+                    newY = 140;
+                }
+                else if(max == tempRSSI[3]) {
+                    newX = 250;
+                    newY = 10;
                 }
                 else{
-                    newX = 70;
-                    newY = 150;
+                    newX = 180;
+                    newY = 75;
                 }
 
                 DisplayMetrics dm = getResources().getDisplayMetrics();
-                newLayoutParams.leftMargin = (int) (newX * dm.density);
+                newLayoutParams.editorAbsoluteX = (int) (newX * dm.density); //dp단위로 만들기
                 newLayoutParams.topMargin = (int) (newY * dm.density);
                 location_user.setLayoutParams(newLayoutParams);
 
@@ -179,81 +182,4 @@ public class FragmentLocation extends Fragment {
             super.onBatchScanResults(results);
         }
     };
-/*
-    public class NetworkTest extends AsyncTask<Void,Void,String> {
-        String url;
-        String result;
-        ContentValues values;
-        String requestMethod;
-        NetworkTest(String url, ContentValues contentValues,String requestMethod){
-            this.url = url;
-            this.values = contentValues;
-            this.requestMethod = requestMethod;
-        }
-        @Override
-        protected String doInBackground(Void... voids) {
-            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
-            result = requestHttpURLConnection.request(url,values,requestMethod);
-
-            return result;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            Log.d("좌표", result);
-            getActivity().runOnUiThread(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            location.setText(result);
-                        }
-                    }
-            );
-            String[] position;
-            position = result.split(", ");
-            double positionX, positionY;
-            positionX = Double.parseDouble(position[0]);
-            positionY = Double.parseDouble(position[1]);
-
-            int newX, newY;
-            newX = (int) (positionX * 100);
-            newY = (int) ((2 - positionY) * 100 / 2 * 3);
-
-            if(newX > 230) newX = 230;
-            else if(newX < 100) newX = 100;
-
-            if(newY > 230) newY = 230;
-            else if (newY < 70) newY = 70;
-            else if (newY < 0) newY = 230;
-
-            ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
-
-            newLayoutParams.leftMargin = newX;
-            newLayoutParams.topMargin = newY;
-            location_user.setLayoutParams(newLayoutParams);
-
-        }
-    }
-
-    // RSSI 전송하는 기능
-    public void putData(String d1, String d2, String d3, String d4){
-        ContentValues contentValues = new ContentValues();
-
-        contentValues.put("user_id", user_id);
-        contentValues.put("user_pwd", user_pwd);
-        contentValues.put("d1", d1);
-        contentValues.put("d2", d2);
-        contentValues.put("d3", d3);
-        contentValues.put("d4", d4);
-
-        NetworkTest networkTest = new NetworkTest("http://mqhome.ipdisk.co.kr/apps/trilateration_rssi/", contentValues,"POST");
-        networkTest.execute();
-    }
-    */
 }
