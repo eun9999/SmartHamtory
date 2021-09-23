@@ -18,6 +18,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import org.altbeacon.beacon.BeaconManager;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconParser;
@@ -44,19 +46,20 @@ public class FragmentLocation extends Fragment {
     private Context context;
     private ArrayList<ListViewItem> items;
 
-    TextView location_user, location;
     ImageView imageView;
     double tempRSSI[];
     int newX, newY;
     String user_id, user_pwd;
     private int cnt = 0; //좌표 너무 빨리 바껴서 텀 주기
 
+    private BLE_scanner ble_scanner;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //ble 주변 장치 스캔 시작
-        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
+        ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
         ble_scanner.startScan();
     }
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -83,6 +86,13 @@ public class FragmentLocation extends Fragment {
         return view;
     }
 
+    @Override
+    public void onPause() {
+        Toast.makeText(getContext(),"end",Toast.LENGTH_SHORT).show();
+        ble_scanner.stopScan();
+        super.onPause();
+    }
+
     private final ScanCallback scanCallback = new ScanCallback() {
         // 장치 하나 발견할때마다 호출됨
         @RequiresApi(api = Build.VERSION_CODES.O)
@@ -98,7 +108,9 @@ public class FragmentLocation extends Fragment {
                                     result,
                                     listViewItem.getRssi_mean(),
                                     listViewItem.getRssi_cnt(),
-                                    listViewItem.getBefore_time()
+                                    listViewItem.getBefore_time(),
+                                    (byte)0,
+                                    new byte[]{}
                             )
                     );    // 정보 수정
                     result = null;
@@ -106,9 +118,9 @@ public class FragmentLocation extends Fragment {
                 }
             }
             if(result != null){
-                items.add(new ListViewItem(result));    //중복 나열 방지
+                items.add(new ListViewItem(result,(byte)0,new byte[]{}));    //중복 나열 방지
             }
-            tempRSSI = new double[]{0,0,0,0};
+            tempRSSI = new double[]{-100,-100,-100,-100};
             for (int i = 0; i < items.size(); i++){
                 double rssi = items.get(i).getRssiNew2();
                 switch(items.get(i).getName()) {
@@ -128,7 +140,7 @@ public class FragmentLocation extends Fragment {
             }
             Log.d("caserssi", tempRSSI[0]+" "+tempRSSI[1]+" "+tempRSSI[2]+" "+tempRSSI[3]);
             if(cnt == 50){
-                ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) location_user.getLayoutParams();
+                ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) imageView.getLayoutParams();
 
                 double max = tempRSSI[0];
                 for(int i = 0; i < tempRSSI.length; i++){
@@ -166,7 +178,7 @@ public class FragmentLocation extends Fragment {
                 DisplayMetrics dm = getResources().getDisplayMetrics();
                 newLayoutParams.editorAbsoluteX = (int) (newX * dm.density); //dp단위로 만들기
                 newLayoutParams.topMargin = (int) (newY * dm.density);
-                location_user.setLayoutParams(newLayoutParams);
+                imageView.setLayoutParams(newLayoutParams);
 
                 cnt = 0;
             }
