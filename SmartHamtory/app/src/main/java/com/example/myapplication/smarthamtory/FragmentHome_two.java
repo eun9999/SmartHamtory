@@ -1,57 +1,112 @@
 package com.example.myapplication.smarthamtory;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class FragmentHome_two extends Fragment {
-
-    TextView data1, data2, data3, data4;
-    EditText error_content1, error_content2, error_content3, error_content4;
-    CheckBox cb1, cb2, cb3, cb4;
+    TextView data1;
+    EditText error_content1;
     Button sendErrorBtn;
     String _url;
     String user_id, user_pwd, error_content, equipment_name;
+    DBHelper helper;
+    SQLiteDatabase db;
+    List<String> list_temp = new ArrayList<String>();
+    String[] equipment_list;
+    private Context context;
+    private ArrayList<ListViewItem> items;
+    private CustomBaseAdapter customBaseAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = getContext();
+        helper = new DBHelper(context, "equipDB.db", null, 1);
+        db = helper.getWritableDatabase();
+
+        helper.onCreate(db);
+
+        //QR코드 입력으로 내부 DB에 등록된 설비만 볼 수 있도록 필터링
+        String sql = "SELECT * FROM equipment;";
+        Cursor c = db.rawQuery(sql, null);
+
+        while(c.moveToNext()){
+//            System.out.println("name : "+c.getString(c.getColumnIndex("name")));
+//            System.out.println("address : "+c.getString(c.getColumnIndex("address")));
+            list_temp.add(c.getString(c.getColumnIndex("address")));
+        }
+
+        equipment_list = new String[list_temp.size()];
+        list_temp.toArray(equipment_list);
+        
+        //ble 주변 장치 스캔 시작
+        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, equipment_list);
+        ble_scanner.startScan();
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home_two, container, false);
+        context = container.getContext();
 
-        cb1 = view.findViewById(R.id.checkBox1);    // 설비 1의 체크박스
-        cb2 = view.findViewById(R.id.checkBox2);
-        cb3 = view.findViewById(R.id.checkBox3);
-        cb4 = view.findViewById(R.id.checkBox4);
+        //list 보여줌
+        items = new ArrayList<>();
+        customBaseAdapter = new CustomBaseAdapter(getActivity().getApplicationContext(),items);
+        ListView listView =  view.findViewById(R.id.listviews);
+        listView.setAdapter(customBaseAdapter);
+        customBaseAdapter.notifyDataSetChanged();
 
         sendErrorBtn = view.findViewById(R.id.sendError);   // 에러 전송 버튼
+        error_content1 = view.findViewById(R.id.error_content1);    // 설비 1의 에러 내용
 
         data1 = view.findViewById(R.id.machine_data1_2);    // 설비 1의 센서값
-        data2 = view.findViewById(R.id.machine_data2_2);
-        data3 = view.findViewById(R.id.machine_data3_2);
-        data4 = view.findViewById(R.id.machine_data4_2);
 
-        error_content1 = view.findViewById(R.id.error_content1);    // 설비 1의 에러 내용
-        error_content2 = view.findViewById(R.id.error_content2);
-        error_content3 = view.findViewById(R.id.error_content3);
-        error_content4 = view.findViewById(R.id.error_content4);
-
+        //spinner 사용하기
+        final Spinner mSpinner = view.findViewById(R.id.spinner);
+        String[] equipment = getResources().getStringArray(R.array.equipment);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(),android.R.layout.simple_spinner_item, equipment);
+        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        mSpinner.setAdapter(adapter);
 
         // 로그인 아이디, 비밀번호 받아오기
         Bundle bundle = this.getArguments();
@@ -63,42 +118,52 @@ public class FragmentHome_two extends Fragment {
             Log.d("user", user_pwd);
         }
 
-        // 에러 전송 버튼 클릭
+        //에러 전송 버튼 클릭
         sendErrorBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
+               //선택된 값 가져오기
+                Log.d("spinner", mSpinner.getSelectedItem().toString());
+
                 _url = "mqhome.ipdisk.co.kr/apps/errorreceive/";
 
-                if (cb1.isChecked()){
-                    equipment_name = "프레스";
-                    error_content = error_content1.getText().toString();    // 설비 1의 에러 내용
-                    putData(user_id, user_pwd, equipment_name, error_content);
-                    cb1.setChecked(false);
-                }
-                if (cb2.isChecked()){
-                    equipment_name = "차체조립";
-                    error_content = error_content2.getText().toString();    // 설비 2의 에러 내용
-                    putData(user_id, user_pwd, equipment_name, error_content);
-                    cb2.setChecked(false);
-                }
-                if (cb3.isChecked()){
-                    equipment_name = "도장";
-                    error_content = error_content3.getText().toString();    // 설비 3의 에러 내용
-                    putData(user_id, user_pwd, equipment_name, error_content);
-                    cb3.setChecked(false);
-                }
-                if (cb4.isChecked()){
-                    equipment_name = "의장";
-                    error_content = error_content4.getText().toString();    // 설비 4의 에러 내용
-                    putData(user_id, user_pwd, equipment_name, error_content);
-                    cb4.setChecked(false);
-                }
-
-
+                equipment_name = mSpinner.getSelectedItem().toString();
+                error_content = error_content1.getText().toString();    // 설비 1의 에러 내용
+                putData(user_id, user_pwd, equipment_name, error_content);
+                error_content1.setText("");
             }
         });
 
         return view;
     }
+
+    private final ScanCallback scanCallback = new ScanCallback() {
+        // 장치 하나 발견할때마다 호출됨
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            //등록된 공장의 설비만 검색
+            for(ListViewItem listViewItem:items){
+                if(result.getDevice().equals(listViewItem.getScanResult().getDevice())) {
+                    items.set(items.indexOf(listViewItem),new ListViewItem(result)); //이미 찾았던 설비면 거기다 값 업데이트
+                    result = null;
+                    break;
+                }
+            }
+            if(result != null){
+                items.add(new ListViewItem(result));    //중복 나열 방지
+            }
+            customBaseAdapter.notifyDataSetChanged();
+        }
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+    };
 
     public class NetworkTest extends AsyncTask<Void,Void,String> {
         String url;
@@ -141,5 +206,91 @@ public class FragmentHome_two extends Fragment {
 
         NetworkTest networkTest = new NetworkTest("http://" + _url, contentValues,"POST");
         networkTest.execute();
+    }
+}
+
+// list 에 ble 장치 정보 저장
+class CustomBaseAdapter extends BaseAdapter {
+    private ArrayList<ListViewItem> arrayList;
+    public static Context context;
+    public CustomBaseAdapter(Context context ,ArrayList<ListViewItem> arrayList){
+        this.context = context;
+        this.arrayList = arrayList;
+    }
+    @Override
+    public int getCount() {
+        return arrayList.size();
+    }
+
+    @Override
+    public Object getItem(int i) {
+        return arrayList.get(i);
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return 0;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    @SuppressLint("ViewHolder")
+    @Override
+    public View getView(int i, View view, ViewGroup viewGroup) {
+        view = LayoutInflater.from(context).inflate(R.layout.listview_item,viewGroup,false);
+
+        ListViewItem listViewItem = (ListViewItem) getItem(i);
+
+        TextView mugae = view.findViewById(R.id.machine_data1);
+        TextView record = view.findViewById(R.id.machine_data1_2);
+        TextView unit = view.findViewById(R.id.machine_data1_3);
+        TextView name = view.findViewById(R.id.machine_name2);
+
+        if (listViewItem.getName().equals("프레스")){
+            name.setText("프레스");
+            mugae.setText("거리 : ");
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            String tempdata1 = str2[2];
+            String tempdata2 = str2[3];
+
+            if (tempdata1.length()<2 || tempdata2.length()<2) {
+                if(tempdata1.length()<2)
+                    tempdata1 = "0" + tempdata1; //3이면 03이렇게 표현하기위해
+                if(tempdata2.length()<2)
+                    tempdata2 = "0" + tempdata2; //3이면 03이렇게 표현하기위해
+            }
+            record.setText(tempdata1+"."+tempdata2);
+            unit.setText("cm");
+        }
+        else if (listViewItem.getName().equals("차체조립")){
+            name.setText("차체조립");
+            mugae.setText("실링 온도 : ");
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
+            unit.setText("℃");
+        }
+        else if (listViewItem.getName().equals("의장")){
+            name.setText("의장");
+            mugae.setText("압력 : ");
+            String str = listViewItem.getScanRecorder();
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
+            unit.setText("N");
+        }
+        else if (listViewItem.getName().equals("도장")){
+            name.setText("도장");
+            mugae.setText("무게 : ");
+            String str = listViewItem.getScanRecorder();
+
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[2]);
+            record.setText(str2[2]);
+            unit.setText("kg");
+        }
+        return view;
     }
 }
