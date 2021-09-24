@@ -85,6 +85,8 @@ public class MainActivity extends AppCompatActivity {
             {
                 case R.id.home:
                     transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
+                    FragmentHome fragment3 = new FragmentHome();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, fragment3).commit();
                     break;
                 case R.id.home_two:
                     Bundle bundle = new Bundle();

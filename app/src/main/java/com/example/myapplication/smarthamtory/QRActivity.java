@@ -1,7 +1,9 @@
 package com.example.myapplication.smarthamtory;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -12,7 +14,7 @@ public class QRActivity extends AppCompatActivity {
     private Button goMainBtn;
     private Button scanQRBtn;
     private Button deleteBtn;
-    TextView textViewName;
+    TextView textViewName , textViewAddress;
     String user_id, user_pwd;
     DBHelper helper;
     SQLiteDatabase db;
@@ -20,7 +22,11 @@ public class QRActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qr);
-        deleteBtn = (Button) findViewById(R.id.delete);
+
+        textViewName = (TextView) findViewById(R.id.textViewName);
+        textViewAddress = (TextView) findViewById(R.id.textViewAddress);
+
+//        deleteBtn = (Button) findViewById(R.id.delete);
         goMainBtn = (Button) findViewById(R.id.goMain);
         scanQRBtn = (Button) findViewById(R.id.scanQR);
         helper = new DBHelper(QRActivity.this, "equipDB.db", null, 1);
@@ -30,13 +36,13 @@ public class QRActivity extends AppCompatActivity {
         Intent intent = getIntent();
         user_id = intent.getExtras().getString("user_id");
         user_pwd = intent.getExtras().getString("user_pwd");
-        deleteBtn.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View v){
-                //db 전체 데이터 삭제
-                String delete = "DELETE FROM equipment";
-                db.execSQL(delete);
-            }
-        });
+//        deleteBtn.setOnClickListener(new View.OnClickListener(){
+//            public void onClick(View v){
+//                //db 전체 데이터 삭제
+//                String delete = "DELETE FROM equipment";
+//                db.execSQL(delete);
+//            }
+//        });
         goMainBtn.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 Intent intent = new Intent(QRActivity.this, MainActivity.class);
@@ -55,6 +61,22 @@ public class QRActivity extends AppCompatActivity {
             }
         });
 
+        String sql = "SELECT * FROM equipment;";
+        Cursor c = db.rawQuery(sql, null);
+        String name = "";
+        String addr = "";
+        while(c.moveToNext()){
+            System.out.println("name2 : "+c.getString(c.getColumnIndex("name")));
+            System.out.println("address2 : "+c.getString(c.getColumnIndex("address")));
+            name += c.getString(c.getColumnIndex("name")) + "\n";
+            addr += c.getString(c.getColumnIndex("address")) + "\n";
+        }
+        Log.d("name3 ", name);
+        Log.d("addr3 ", addr);
+
+        // "" 속에는 QR코드의 키 값
+        textViewName.setText(name);
+        textViewAddress.setText(addr);
 
     }
 

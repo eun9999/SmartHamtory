@@ -7,19 +7,7 @@
     android:background="#f7f7f7"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ScanQR">
-        <Button
-            android:id="@+id/delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="0dp"
-            android:layout_marginRight="0dp"
-            android:text="삭제"
-            android:background="@drawable/login_btn"
-            android:textColor="@color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            tools:ignore="MissingConstraints"/>
+
         <Button
             android:id="@+id/goMain"
             android:layout_width="wrap_content"

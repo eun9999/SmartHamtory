@@ -108,9 +108,6 @@ public class ScanQR extends AppCompatActivity {
                 try {
                     //data를 json으로 변환
                     JSONObject obj = new JSONObject(result.getContents());
-                    // "" 속에는 QR코드의 키 값
-                    textViewName.setText(obj.getString("name"));
-                    textViewAddress.setText(obj.getString("address"));
 
                     //insert
                     ContentValues values = new ContentValues();
