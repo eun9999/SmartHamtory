@@ -78,17 +78,12 @@ public class FragmentHome_two extends Fragment {
         Cursor c = db.rawQuery(sql, null);
 
         while(c.moveToNext()){
-//            System.out.println("name : "+c.getString(c.getColumnIndex("name")));
-//            System.out.println("address : "+c.getString(c.getColumnIndex("address")));
             list_temp.add(c.getString(c.getColumnIndex("address")));
         }
 
         equipment_list = new String[list_temp.size()];
         list_temp.toArray(equipment_list);
 
-        //ble 주변 장치 스캔 시작
-//        BLE_scanner ble_scanner = new BLE_scanner(context, scanCallback, equipment_list);
-//        ble_scanner.startScan();
     }
 
     @Override
@@ -146,8 +141,6 @@ public class FragmentHome_two extends Fragment {
         rpi_hashMap.put("22","B8:27:EB:41:45:A5"); //34
         rpi_hashMap.put("33","B8:27:EB:BE:1E:08"); //51
         rpi_hashMap.put("45","B8:27:EB:95:9F:A8"); //69
-//        rpi_hashMap.put("55","B8:27:EB:C0:11:A5");
-
 
         ble_mesh = new BLE_mesh(context,phone_id,rpi_hashMap);
         ble_mesh.start_ble_scan(meshScanCallback);  // thread 로 계속 요청
@@ -167,7 +160,7 @@ public class FragmentHome_two extends Fragment {
                         ble_mesh.MSG_send((byte) Integer.parseInt(rpi_id,16), 1000);
                         Log.d("dddddd", ""+(byte) Integer.parseInt(rpi_id,16));
                         try {
-                            Thread.sleep(480);
+                            Thread.sleep(500);
                         } catch (InterruptedException e) {
                             Log.d("error", "" + e.toString());
                         }
@@ -218,6 +211,7 @@ public class FragmentHome_two extends Fragment {
             customBaseAdapter.notifyDataSetChanged();
         }
     };
+    //http 통신 위한 클래스
     public class NetworkTest extends AsyncTask<Void,Void,String> {
         String url;
         ContentValues values;
@@ -297,11 +291,6 @@ class CustomBaseAdapter extends BaseAdapter {
         TextView record = view.findViewById(R.id.machine_data1_2);
         TextView unit = view.findViewById(R.id.machine_data1_3);
         TextView name = view.findViewById(R.id.machine_name2);
-
-//        mugae.setText(listViewItem.getDevice());
-//        record.setText(listViewItem.getData());
-//        unit.setText("test");
-//        name.setText(listViewItem.getDevice());
 
         if (listViewItem.getName().equals("프레스")){
             name.setText("프레스");

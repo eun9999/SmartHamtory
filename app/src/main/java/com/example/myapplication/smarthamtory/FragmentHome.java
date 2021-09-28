@@ -3,10 +3,12 @@ package com.example.myapplication.smarthamtory;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.Entity;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Trace;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,8 +23,11 @@ import androidx.fragment.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class FragmentHome extends Fragment {
     private TextView close_machine_name, close_machine_data, mugae, unit;
@@ -33,17 +38,16 @@ public class FragmentHome extends Fragment {
     double tempRSSI[];
 
     int max = -100;
-    String closest = "";
-    int cnt = 1;
-    String data2 = "";
+    String tempdata = "";
+
+    private HashMap<String,String> rpi_hashMap2 = new HashMap<>();
+    private HashMap<String,Integer> rpi_hashMap3 = new HashMap<>();
+    private Thread thread;
+    private String device = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        //ble 주변 장치 스캔 시작
-        ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8"});
-        ble_scanner.startScan();
     }
 
     @Override
@@ -65,105 +69,159 @@ public class FragmentHome extends Fragment {
         rpi_hashMap.put("22","B8:27:EB:41:45:A5");
         rpi_hashMap.put("33","B8:27:EB:BE:1E:08");
         rpi_hashMap.put("45","B8:27:EB:95:9F:A8");
-        //        rpi_hashMap.put("55","B8:27:EB:C0:11:A5");
+        rpi_hashMap.put("55","B8:27:EB:C0:11:A5");
+
+        rpi_hashMap2.put("B8:27:EB:A5:63:57","11");
+        rpi_hashMap2.put("B8:27:EB:41:45:A5","22");
+        rpi_hashMap2.put("B8:27:EB:BE:1E:08","33");
+        rpi_hashMap2.put("B8:27:EB:95:9F:A8","45");
+        rpi_hashMap2.put("B8:27:EB:C0:11:A5","55");
+
 
         ble_mesh = new BLE_mesh(context,phone_id,rpi_hashMap);
+        ble_mesh.start_ble_scan(meshScanCallback);
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(!thread.isInterrupted()){
+                    Log.d("thread_create_view", String.valueOf(rpi_hashMap3.size()));
+                    try {
+                        List<String> keySetList = new ArrayList<>(rpi_hashMap3.keySet());
+                        Collections.sort(keySetList,(o1,o2)->(rpi_hashMap3.get(o1).compareTo(rpi_hashMap3.get(o2))));
+                        if(keySetList.size() > 0) {
+                            ble_mesh.MSG_send((byte) Integer.parseInt(rpi_hashMap2.get(keySetList.get(keySetList.size()-1)), 16), 1000);
+                            rpi_hashMap3.put(keySetList.get(keySetList.size()-1),-100);
+                        }
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+            }
+        });
+        thread.start();
+
+        //ble 주변 장치 스캔 시작
+        ble_scanner = new BLE_scanner(context, scanCallback, new String[]{"B8:27:EB:A5:63:57", "B8:27:EB:41:45:A5", "B8:27:EB:BE:1E:08", "B8:27:EB:95:9F:A8","B8:27:EB:C0:11:A5"});
+        ble_scanner.startScan();
 
         return view;
 
     }
     @Override
-    public void onPause() {
-        super.onPause();
+    public void onStop() {
+        super.onStop();
         Toast.makeText(getContext(),"end",Toast.LENGTH_SHORT).show();
         ble_scanner.stopScan();
+        ble_mesh.stop_ble_scan();
+        max = -100;
+        thread.interrupt();
+        device = null;
     }
 
-
+    //BLE scanner
     private final ScanCallback scanCallback = new ScanCallback() {
         // 장치 하나 발견할때마다 호출됨
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            cnt++;
-            if(cnt % 5 != 0){
-                if(result.getRssi() > max){
-                    max = result.getRssi();
-                    closest = result.getDevice().toString();
-                }
-                Log.d("QQcnt", String.valueOf(cnt));
-                Log.d("QQmax22", String.valueOf(max));
-                Log.d("QQclosest", closest);
-
-            }
-            else{
-                viewSetting(closest);
-                ble_scanner.stopScan();
-                Log.d("QQble", "blebleble");
-
-                ble_mesh.start_ble_scan(meshScanCallback);  // thread 로 계속 요청
-                ble_mesh.MSG_send((byte) Integer.parseInt("33",16), 1000);
-
-            }
-
+            //RSSI 값이 가장 큰 설비의 mac주소와 rssi 값 hashmap에 추가
+            rpi_hashMap3.put(result.getDevice().toString(), result.getRssi());
         }
-
         @Override
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
         }
-
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
         }
     };
-
+    //Mesh scanner
     private final MeshScanCallback meshScanCallback = new MeshScanCallback() {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void onMeshScanResult(int callbackType, ScanResult result,byte source, byte[] data) {
-            Log.d("mesh", "mesh");
             List<Integer> test = new ArrayList<>();
             for(byte b : data) {
-                test.add(Byte.toUnsignedInt(b));
+                test.add(Byte.toUnsignedInt(b)); //datat 받아오기
             }
-            data2 = Arrays.toString(test.toArray());
-            Log.d("mesh", data2);
-            close_machine_data.setText(data2);
-            ble_mesh.stop_ble_scan();
-            ble_scanner.startScan();
+            tempdata = Arrays.toString(test.toArray()); //byte를 str로 바꾸기
+            viewSetting(result.getDevice().toString() ,tempdata); //textview에 넣기
         }
     };
 
-    public void viewSetting(String closest){
+    public void viewSetting(String closest, String data){
         String name ="";
         String data1 = ""; //거리, 무게 등
         String data2 = ""; //진짜 데이터
         String tempunit = "";
-
+        String str = "";
+        String[] str2;
         name = getName(closest);
         switch(name) {
             case "프레스":
                 data1 = "거리 : ";
                 tempunit = "cm";
+                str = data;
+                str = str.replace("[","");
+                str = str.replace("]","");
+
+                str2 = str.split(", ");
+                String tempdata1 = str2[0];
+                String tempdata2 = str2[1];
+                if (tempdata1.length()<2 || tempdata2.length()<2) {
+                    if(tempdata1.length()<2)
+                        tempdata1 = "0" + tempdata1; //3이면 03이렇게 표현하기위해
+                    if(tempdata2.length()<2)
+                        tempdata2 = "0" + tempdata2; //3이면 03이렇게 표현하기위해
+                }
+                data2 = tempdata1+"."+tempdata2;
+                Log.d("mesh", data2);
                 break;
             case "차체조립":
                 data1 = "실링온도 : ";
                 tempunit = "℃";
+                str = data;
+
+                str = str.replace("[","");
+                str = str.replace("]","");
+
+                str2 = str.split(", ");
+                data2 = str2[0];
                 break;
             case "의장":
                 data1 = "압력 : ";
                 tempunit = "N";
+                str = data;
+
+                str = str.replace("[","");
+                str = str.replace("]","");
+
+                str2 = str.split(", ");
+                data2 = str2[0];
                 break;
             case "도장":
                 data1 = "무게 : ";
                 tempunit = "kg";
+                str = data;
+
+                str = str.replace("[","");
+                str = str.replace("]","");
+
+                str2 = str.split(", ");
+                data2 = str2[0];
+                break;
+            default:
+                data1 = "??? : ";
+                tempunit = "???";
                 break;
         }
 
         close_machine_name.setText(name);
+        close_machine_data.setText(data2);
         mugae.setText(data1);
         unit.setText(tempunit);
     }

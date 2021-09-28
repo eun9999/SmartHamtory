@@ -47,9 +47,13 @@ public class FragmentLocation extends Fragment {
 
     ImageView imageView;
     TextView rssitext;
+    String closest = "";
     double tempRSSI[];
     int newX, newY;
     String user_id, user_pwd;
+    String _url = "mqhome.ipdisk.co.kr/apps/setuserlocation/";
+
+
     private int cnt = 0; //좌표 너무 빨리 바껴서 텀 주기
     private BLE_scanner ble_scanner;
     @Override
@@ -67,10 +71,17 @@ public class FragmentLocation extends Fragment {
 
         rssitext = view.findViewById(R.id.rssitext);
 
-        imageView = view.findViewById(R.id.location_press);
-
-        //내 위치 나타내는 이미지 색 변경
         imageView = (ImageView)view.findViewById(R.id.location_press);
+
+        // 로그인 아이디, 비밀번호 받아오기
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+            bundle = getArguments();
+            user_id = bundle.getString("user_id");
+            user_pwd = bundle.getString("user_pwd");
+            Log.d("user", user_id);
+            Log.d("user", user_pwd);
+        }
 
         return view;
     }
@@ -129,14 +140,6 @@ public class FragmentLocation extends Fragment {
                 }
             }
             rssitext.setText("rssi : " + tempRSSI[0]+" "+tempRSSI[1]+" "+tempRSSI[2]+" "+tempRSSI[3]);
-            //Log.d("caserssi", tempRSSI[0]+" "+tempRSSI[1]+" "+tempRSSI[2]+" "+tempRSSI[3]);
-
-            //더 많은 zone 분할을 위해 sort 할 배열 추가 (deep copy)
-            double[] sortArray = new double[tempRSSI.length];
-            for(int i = 0; i < tempRSSI.length; i++){
-                sortArray[i] = tempRSSI[i];
-            }
-            Arrays.sort(sortArray); //오름차순 sort
 
             if(cnt == 5){
                 ConstraintLayout.LayoutParams newLayoutParams = (ConstraintLayout.LayoutParams) imageView.getLayoutParams();
@@ -149,7 +152,6 @@ public class FragmentLocation extends Fragment {
                 //일단 6+1개 구역으로 나눔 안 6, 밖 1
                 //밖 : Top : 400, X : 180
                 //가운데 : Top : 75, X : 180
-
                 //차체에 가까울 때 : Top : 10, X : 110
                 //도장에 가까울 때 : Top : 10, X : 250
                 //의장에 가까울 때 : Top : 140, X : 250
@@ -157,22 +159,27 @@ public class FragmentLocation extends Fragment {
                 if(max == tempRSSI[0] && tempRSSI[0] > -75) { //프레스
                     newX = 100;
                     newY = 148;
+                    closest = "프레스";
                 }
                 else if(max == tempRSSI[1] && tempRSSI[1] > -78) { //차체조립
                     newX = 100;
                     newY = 0;
+                    closest = "차체조립";
                 }
                 else if(max == tempRSSI[2] && tempRSSI[2] > -80) { //의장
                     newX = 220;
                     newY = 148;
+                    closest = "의장";
                 }
                 else if(max == tempRSSI[3] && tempRSSI[3] > -75) { //도장
                     newX = 220;
                     newY = 0;
+                    closest = "도장";
                 }
                 else if(tempRSSI[1] == -100 && tempRSSI[3] == -100){ //밖
                     newX = 160;
                     newY = 400;
+                    closest = "밖";
                 }
                 Log.d("newX ", Integer.toString(newX));
                 Log.d("newY ", Integer.toString(newY));
@@ -181,6 +188,7 @@ public class FragmentLocation extends Fragment {
                 newLayoutParams.leftMargin = (int) (newX * dm.density); //dp단위로 만들기
                 newLayoutParams.topMargin = (int) (newY * dm.density);
                 imageView.setLayoutParams(newLayoutParams);
+                putData(user_id, user_pwd, closest);
                 int color = ContextCompat.getColor(getActivity(), R.color.red);
                 imageView.setColorFilter(color);
 
@@ -198,5 +206,45 @@ public class FragmentLocation extends Fragment {
             super.onBatchScanResults(results);
         }
     };
+    public class NetworkTest extends AsyncTask<Void,Void,String> {
+        String url;
+        ContentValues values;
+        String requestMethod;
+        NetworkTest(String url, ContentValues contentValues,String requestMethod){
+            this.url = url;
+            this.values = contentValues;
+            this.requestMethod = requestMethod;
+        }
+        @Override
+        protected String doInBackground(Void... voids) {
+            String result;
+            RequestHttpURLConnection requestHttpURLConnection = new RequestHttpURLConnection();
+            result = requestHttpURLConnection.request(url,values,requestMethod);
+            return result;
+        }
 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if(result.equals("성공")){
+                Toast.makeText(getActivity(),"전송 완료", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    // 관리자 위치 전송하는 기능
+    public void putData(String user_id, String user_pwd, String location){
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("user_id", user_id);
+        contentValues.put("user_pwd", user_pwd);
+        contentValues.put("location", location);
+
+        FragmentLocation.NetworkTest networkTest = new FragmentLocation.NetworkTest("http://" + _url, contentValues,"POST");
+        networkTest.execute();
+    }
 }
