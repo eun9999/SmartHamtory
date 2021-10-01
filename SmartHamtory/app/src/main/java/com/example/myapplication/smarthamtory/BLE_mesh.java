@@ -9,15 +9,21 @@ import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.collection.LruCache;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class BLE_mesh {
     private Context context;
@@ -30,8 +36,9 @@ public class BLE_mesh {
     private ScanCallback scanCallback=null;
     private int dest;   //목적지
     private byte[] random_numbers = {0,0,0,0,0};
-    private String random_number_string ="";
+//    private String random_number_string ="";
     ByteBuffer data;
+    private LruCache<String,String> random_values;
     public BLE_mesh(Context context, String phone_id, HashMap<String,String> rpi_lists){  // phone_id= "aa:aa:aa:aa" 임시로 할당 받은것 중복 안되게 할당 받음
         this.context = context;
         // 광고
@@ -56,6 +63,16 @@ public class BLE_mesh {
         String[] macs = this.rpi_mac_lists.values().toArray(new String[0]);
         ble_scanner = new BLE_scanner(this.context,getScanCallback(),macs);
         // 스캔 end
+
+
+        random_values = new LruCache<>(100);
+//        LruCache<String ,String> ll = new LruCache<>(5);
+//        ll.put("test","s");
+//
+//        Log.d("lru_cache_test_get",String.valueOf(ll.remove("test")));
+//        ll.remove("test2");
+//        Log.d("lru_cache_test_after_resize", ll.snapshot().toString());
+
     }
 //  *********  MSG_send(advert)  **********
     public void MSG_send(int dest,int milliTime){   // milliTime 동안만 광고(라즈베리파이에게 데이터)를 달라고 요청한다.
@@ -86,7 +103,8 @@ public class BLE_mesh {
     private void data_add_random(){
         //16 17 18 19 20 bit -> 실제 방송 packet에서 위치
         //12 13 14 15 16 bit
-        random_number_string = "";
+        String random_number_string ="";
+//        random_number_string = "";
         for(int i: new int[]{12, 13, 14, 15}) {
             random_numbers[i-12] = (byte) random.nextInt(255);
             data.put(i, random_numbers[i-12]);
@@ -95,6 +113,7 @@ public class BLE_mesh {
         random_numbers[4] = (byte)(random.nextInt(254)+1);
         data.put(16,random_numbers[4]);
         random_number_string += String.format("%x", random_numbers[4]);
+        random_values.put(random_number_string,"");
     }
 //  *********  MSG_send end  **********
 
@@ -120,11 +139,11 @@ public class BLE_mesh {
                     //**------------------------------ 폰 데이터 유효성검사 -----------------------------
                     if(raw_packet[0] != (byte)0x1e) // 갯수 0x1e (30) 인지 체크
                         return;
-                    
+
                     byte status_id = raw_packet[2]; // 0x00 이 아니면 모두 무시
                     if(status_id != (byte)0x00)
                         return;
-                    
+
                     byte destination = raw_packet[4];   // 목적지
                     if(destination != (byte)0xff) // rpi -> 폰 으로 전송 하는 것임으로 0xff(목적지는 폰이라는 의미) 가 아니면 return
                          return;
@@ -132,7 +151,7 @@ public class BLE_mesh {
                     byte source = raw_packet[6];   // 출발지
                     if(rpi_mac_lists.get(String.format("%x",source)) == null)   // 출발지 rpi mac lists 에 존재 안하면 return
                         return;
-                    
+
                     byte waypoint = raw_packet[5];  // 경유지
                     String waypoint_mac = rpi_mac_lists.get(String.format("%x",waypoint));
                     if(waypoint_mac == null)    // 경유지 rpi mac lists 에 존재 안하면 return
@@ -145,10 +164,12 @@ public class BLE_mesh {
                         return;
 
                     String detect_random_number_string = String.format("%x%x%x%x%x",raw_packet[21],raw_packet[22],raw_packet[23],raw_packet[24],raw_packet[25]);
-                    if(!random_number_string.equals(detect_random_number_string))   // 저장된 random num 이랑 random2(요청 할때 생성한 랜덤값) 일치안하면 return
+                    if(random_values.remove(detect_random_number_string) == null)
                         return;
+//                    if(!random_number_string.equals(detect_random_number_string))   // 저장된 random num 이랑 random2(요청 할때 생성한 랜덤값) 일치안하면 return
+//                        return;
                     //------------------------------ 폰 데이터 유효성검사 end -----------------------------**/
-                    
+
                     // data 추출
                     byte[] data = Arrays.copyOfRange(raw_packet,11,16);
 
@@ -175,4 +196,23 @@ public class BLE_mesh {
 }
 abstract class MeshScanCallback{    // mesh scan call back 을 위한것
     public abstract void onMeshScanResult(int callbackType, ScanResult result,byte source, byte[] data);   // source 어디에서 온 데이터인지 보여줌
+}
+class MeshScanCallback_values{
+    private ScanResult result;
+    private byte source;
+    private byte[] data;
+    MeshScanCallback_values(ScanResult result,byte source, byte[] data){
+        this.data = data;
+        this.result = result;
+        this.source = source;
+    }
+    public ScanResult getResult() {
+        return result;
+    }
+    public byte[] getData() {
+        return data;
+    }
+    public byte getSource() {
+        return source;
+    }
 }

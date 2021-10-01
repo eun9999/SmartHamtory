@@ -1,0 +1,102 @@
+{% load static %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="{% static 'js/menu_4.js' %}"></script>
+{######################## 회원가입 ##################################}
+<form method="post" id="form_sign">
+    {% csrf_token %}
+    {% include "menu/form_errors.html" %}
+    <div class="form_input_data">
+        <input type="text" class="form-control" name="last_name" id="last_name" placeholder="사용자 이름"
+               value="{{ form.last_name.value|default_if_none:'' }}">
+    </div>
+    <div class="form_input_data">
+        <input type="text" class="form-control" name="username" id="username" placeholder="아이디"
+               value="{{ form.username.value|default_if_none:'' }}">
+    </div>
+    <div class="form_input_data">
+        <input type="password" class="form-control" name="password1" id="password1" placeholder="비밀번호"
+               value="{{ form.password1.value|default_if_none:'' }}">
+    </div>
+    <div class="form_input_data">
+        <input type="password" class="form-control" name="password2" id="password2" placeholder="비밀번호 확인"
+               value="{{ form.password2.value|default_if_none:'' }}">
+    </div>
+    <div class="form_input_data">
+        <input type="text" class="form-control" name="email" id="email" placeholder="이메일"
+               value="{{ form.email.value|default_if_none:'' }}">
+    </div>
+</form>
+<div class="form_input_data">
+    <button id="user_add_bt" style="width: 100%" class="btn btn-primary">생성하기</button>
+</div>
+{# ############################################################ #}
+
+{######################## 삭제 ##################################}
+<div style="clear: left;">
+<form method="post" id="form_user_delete">
+    {% csrf_token %}
+    <div class="form_delete_data">
+        <input type="text" class="form-control"  name="user_id" placeholder="아이디" value=""/>
+    </div>
+</form>
+<div class="form_delete_data" style="margin-bottom: 20px">
+    <button id="user_delete_bt" class="btn btn-primary" style="width: 100%;">삭제하기</button>
+</div>
+{% if msg != null %}
+<div class="form_delete_data" style="width: 33.2%;">
+    <div class = "alert alert-danger" style="margin-bottom: 0px">
+        {{ msg }}
+    </div>
+</div>
+{% endif %}
+</div>
+{# ############################################################ #}
+
+{# ##########################조회############################# #}
+<div class="one_search">
+    <form method="post" id="form_one_user_search">
+        {% csrf_token %}
+        <div class="form_one_user_search">
+            <input type="text" class="form-control"  name="user_id" placeholder="아이디" value=""/>
+        </div>
+    </form>
+    <div class="form_one_user_search" style="margin-bottom: 20px">
+        <button id="one_user_search_bt" class="btn btn-primary" style="width: 100%;">조회</button>
+    </div>
+    <div class="form_one_user_search" style="width: 66.4%;">
+        {% if one_msg == null and one_user != null %}
+            <div class = "alert alert-danger" style="margin-bottom: 0px;width: 100%;height: 50px">
+                <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ one_user_info_order.0 }} : {{ one_user }}</div>
+                <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ one_user_info_order.1 }} : {{ one_user.last_name }}</div>
+                <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ one_user_info_order.2 }} : {{ one_user.email }}</div>
+            </div>
+        {% elif one_msg != null %}
+            <div class = "alert alert-danger" style="margin-bottom: 0px;width: 100%;">{{ one_msg }}</div>
+        {% endif %}
+    </div>
+</div>
+{# ############################################################ #}
+
+{######################## 전체 조회################################}
+<div class="form_search_id_data">
+    <button id="user_all_search_bt" class="btn btn-primary" style="width: 100%">전체조회하기</button>
+</div>
+{% if user_info_order != null %}
+<div>
+    <div class = "alert alert-danger" style="height: 50px">
+        {% for i in user_info_order %}
+        <div style="width: 33.3%;float: left; text-align: center">{{ i }}</div>
+        {% endfor %}
+    </div>
+    {% for u in user_all_id %}
+        {% if not u.last_name in no_login_lastname %}
+        <div class = "alert alert-danger" style="height: 50px">
+            <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ u }}</div>
+            <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ u.last_name }}</div>
+            <div style="width: 33.3%;height: 100%; float: left; text-align: center">{{ u.email }}</div>
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+{# ############################################################ #}

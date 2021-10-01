@@ -1,0 +1,11 @@
+<div class="menu_view">
+    {% for name,num,items in list %}
+        <div class="facility_{{ num }}" style="border-top: 1px solid #000000;height: 30vm;">
+            <div class="facility_title">{{ name }}</div>
+            {% for item in items %}
+                <div class="facility_list_name" style="height: 15%;display: flex;align-items: center;"><div style="width: 100%; text-align: center;">{{ item.0 }}</div></div>
+                <div class="facility_list_value" style="height: 15%;display: flex;align-items: center;"><div style="width: 100%; text-align: center;">{{ item.1 }}</div></div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

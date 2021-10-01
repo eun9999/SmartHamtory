@@ -109,7 +109,7 @@ public class ListViewItem {
             return "도장";
         }
         else
-        {return "??"+scanResult.getDevice().getName();}
+        {return "??"+getSource();}
     }
     public ScanResult getScanResult(){
         return scanResult;

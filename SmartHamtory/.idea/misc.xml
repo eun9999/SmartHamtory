@@ -3,6 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/activity_login.xml" value="0.22604166666666667" />
+        <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/activity_main.xml" value="0.22604166666666667" />
+        <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/activity_qr.xml" value="0.22604166666666667" />
+        <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/fragment_home.xml" value="0.36614583333333334" />
+        <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/fragment_home_two.xml" value="0.3614583333333333" />
         <entry key="..\:/Users/MinQ/Desktop/gitss/SmartHamtory/app/src/main/res/layout/fragment_loaction.xml" value="0.20520833333333333" />
         <entry key="..\:/Users/eom/StudioProjects/SmartHamtory/app/src/main/res/drawable/location_box.xml" value="0.12222222222222222" />
         <entry key="..\:/Users/eom/StudioProjects/SmartHamtory/app/src/main/res/drawable/location_user.xml" value="0.12222222222222222" />

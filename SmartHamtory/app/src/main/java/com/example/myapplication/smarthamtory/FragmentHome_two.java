@@ -41,7 +41,9 @@ import androidx.fragment.app.FragmentTransaction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 
 public class FragmentHome_two extends Fragment {
@@ -64,6 +66,9 @@ public class FragmentHome_two extends Fragment {
     private Thread thread;
     private boolean tf = true;
 
+    // new
+    private Thread thread_list;
+    private Queue<MeshScanCallback_values> meshcallback_queue;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +98,7 @@ public class FragmentHome_two extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Log.d("ble_scan_test","2");
         View view = inflater.inflate(R.layout.fragment_home_two, container, false);
         context = container.getContext();
 
@@ -146,8 +152,59 @@ public class FragmentHome_two extends Fragment {
         rpi_hashMap.put("22","B8:27:EB:41:45:A5");
         rpi_hashMap.put("33","B8:27:EB:BE:1E:08");
         rpi_hashMap.put("45","B8:27:EB:95:9F:A8");
-//        rpi_hashMap.put("55","B8:27:EB:C0:11:A5");
+        rpi_hashMap.put("55","B8:27:EB:C0:11:A5");
 
+
+
+        // new
+        meshcallback_queue = new LinkedList<>();
+        thread_list = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        //int callbackType, ScanResult result,byte source, byte[] data
+                        Thread.sleep(10);
+                        if (meshcallback_queue.isEmpty())
+                            continue;
+                        MeshScanCallback_values meshScanCallback_values = meshcallback_queue.poll();
+                        ScanResult result = meshScanCallback_values.getResult();
+                        byte source = meshScanCallback_values.getSource();
+                        byte[] data = meshScanCallback_values.getData();
+                        Log.d("dddddd", Arrays.toString(data));
+                        for (ListViewItem listViewItem : items) {
+                            Log.d("dddddd", Arrays.toString(data));
+                            if (source == listViewItem.getSource()) {
+                                items.set(items.indexOf(listViewItem), new ListViewItem(
+                                        result,
+                                        listViewItem.getRssi_mean(),
+                                        listViewItem.getRssi_cnt(),
+                                        listViewItem.getBefore_time(),
+                                        source,
+                                        data)); //이미 찾았던 설비면 거기다 값 업데이트
+                                Log.d("dddddd", Arrays.toString(data));
+                                result = null;
+                                break;
+                            }
+                        }
+                        if (result != null) {
+                            items.add(new ListViewItem(result, source, data));    //중복 나열 방지
+                        }
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                customBaseAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+            }
+        });
+        thread_list.start();
+        //
 
         ble_mesh = new BLE_mesh(context,phone_id,rpi_hashMap);
         ble_mesh.start_ble_scan(meshScanCallback);  // thread 로 계속 요청
@@ -167,7 +224,7 @@ public class FragmentHome_two extends Fragment {
                         ble_mesh.MSG_send((byte) Integer.parseInt(rpi_id,16), 1000);
                         Log.d("dddddd", ""+(byte) Integer.parseInt(rpi_id,16));
                         try {
-                            Thread.sleep(900);
+                            Thread.sleep(320);
                         } catch (InterruptedException e) {
                             Log.d("error", "" + e.toString());
                         }
@@ -182,40 +239,57 @@ public class FragmentHome_two extends Fragment {
         });
         thread.start();
 //        thread.interrupt();
+
+
         return view;
     }
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        Log.d("ble_stop_mesh","stop");
         ble_mesh.stop_ble_scan();
         tf = false;
         thread.interrupt();
+        //new
+        thread_list.interrupt();
+        //
+        items.clear();
+        customBaseAdapter.notifyDataSetChanged();
         Log.d("dddddd","interrupt");
     }
 
     private final MeshScanCallback meshScanCallback = new MeshScanCallback() {
         @Override
         public void onMeshScanResult(int callbackType, ScanResult result,byte source, byte[] data) {
-            //등록된 공장의 설비만 검색
-            for(ListViewItem listViewItem:items){
-//                if(result.getDevice().equals(listViewItem.getScanResult().getDevice())) {
-                if(source == listViewItem.getSource()){
-                    items.set(items.indexOf(listViewItem),new ListViewItem(
-                                                        result,
-                                                        listViewItem.getRssi_mean(),
-                                                        listViewItem.getRssi_cnt(),
-                                                        listViewItem.getBefore_time(),
-                                                        source,
-                                                        data)); //이미 찾았던 설비면 거기다 값 업데이트
-                    Log.d("dddddd",Arrays.toString(data));
-                    result = null;
-                    break;
-                }
-            }
-            if(result != null){
-                items.add(new ListViewItem(result,source,data));    //중복 나열 방지
-            }
-            customBaseAdapter.notifyDataSetChanged();
+//            meshcallback_queue.add();
+            meshcallback_queue.offer(new MeshScanCallback_values(result,source,data));
+//            Log.d("dddddd",Arrays.toString(data));
+//            //등록된 공장의 설비만 검색
+//            for(ListViewItem listViewItem:items){
+////                if(result.getDevice().equals(listViewItem.getScanResult().getDevice())) {
+//                Log.d("dddddd",Arrays.toString(data));
+//                if(source == listViewItem.getSource()){
+//                    items.set(items.indexOf(listViewItem),new ListViewItem(
+//                                                        result,
+//                                                        listViewItem.getRssi_mean(),
+//                                                        listViewItem.getRssi_cnt(),
+//                                                        listViewItem.getBefore_time(),
+//                                                        source,
+//                                                        data)); //이미 찾았던 설비면 거기다 값 업데이트
+//                    Log.d("dddddd",Arrays.toString(data));
+//                    result = null;
+//                    break;
+//                }
+//            }
+//            if(result != null){
+//                items.add(new ListViewItem(result,source,data));    //중복 나열 방지
+//            }
+//            customBaseAdapter.notifyDataSetChanged();
         }
     };
     public class NetworkTest extends AsyncTask<Void,Void,String> {
@@ -356,6 +430,19 @@ class CustomBaseAdapter extends BaseAdapter {
         }
         else if (listViewItem.getName().equals("도장")){
             name.setText("도장");
+            mugae.setText("무게 : ");
+            String str = listViewItem.getData();
+
+            str = str.replace("[","");
+            str = str.replace("]","");
+
+
+            String[] str2 = str.split(", ");
+            Log.d("str2", str2[0]);
+            record.setText(str2[0]);
+            unit.setText("kg");
+        }else{
+            name.setText(""+listViewItem.getName());
             mugae.setText("무게 : ");
             String str = listViewItem.getData();
 

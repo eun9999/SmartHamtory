@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
         user_id = intent.getExtras().getString("user_id");
         user_pwd = intent.getExtras().getString("user_pwd");
 
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
+//        FragmentTransaction transaction = fragmentManager.beginTransaction();
+//        transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.navigationView);
         bottomNavigationView.setOnNavigationItemSelectedListener(new ItemSelectedListener());
@@ -72,6 +72,9 @@ public class MainActivity extends AppCompatActivity {
                 Manifest.permission.ACCESS_COARSE_LOCATION
         };
         ActivityCompat.requestPermissions(MainActivity.this, permission_list,  1);
+
+        FragmentHome fragmentHome = new FragmentHome();
+        getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, fragmentHome).commit();
     }
 
     // 하단 내비게이션 바 이동
@@ -84,7 +87,12 @@ public class MainActivity extends AppCompatActivity {
             switch(menuItem.getItemId())
             {
                 case R.id.home:
-                    transaction.replace(R.id.frameLayout, fragmentHome).commitAllowingStateLoss();
+
+                    //**************** 수정 ************************************
+                    FragmentHome fragmentHome = new FragmentHome();
+                    getSupportFragmentManager().beginTransaction().replace(R.id.frameLayout, fragmentHome).commit();
+                    //**********************************************************
+
                     break;
                 case R.id.home_two:
                     Bundle bundle = new Bundle();
